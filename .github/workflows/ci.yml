@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # LEVLAB_FAST=1 skips only the exhaustive sweep; everything else runs.
+      # The sweep is ~2 min and belongs in a manual full run, not in CI.
+      - name: Run tests (fast profile)
+        env:
+          LEVLAB_FAST: "1"
+        run: python -m unittest discover -s tests -t . -v
+
+      - name: Smoke-run the benchmark
+        run: python benchmarks/run_all.py --quick
+
+      # Guard against a smoke run clobbering the real results table.
+      - name: Verify quick run did not touch results.json
+        shell: bash
+        run: |
+          if git diff --quiet -- benchmarks/results.json; then
+            echo "results.json untouched, as intended"
+          else
+            echo "::error::--quick modified results.json"
+            exit 1
+          fi

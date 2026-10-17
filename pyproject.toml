@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "levlab"
+version = "1.0.0"
+description = "Banded Levenshtein distance with measured guards and a four-arm benchmark"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "linluozi" }]
+keywords = ["levenshtein", "edit-distance", "fuzzy-search", "ukkonen", "banded", "algorithm"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/linluozi/levenshtein-band-lab"
+
+[tool.setuptools]
+packages = ["levlab"]
