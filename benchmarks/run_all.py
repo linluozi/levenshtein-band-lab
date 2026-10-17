@@ -426,9 +426,21 @@ def worker(arm: str, a: str, b: str, k: str) -> None:
 
 
 def main() -> None:
+    # Windows consoles and CI runners default stdout to cp1252/cp936, which
+    # cannot encode the Chinese search terms printed below. Reconfigure to UTF-8
+    # with replacement so the benchmark never dies on a print call.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass  # already UTF-8, or a stream that cannot be reconfigured
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--quick", action="store_true",
                         help="smoke run: fewer lengths, writes results-quick.json")
+    parser.add_argument("--ci", action="store_true",
+                        help="minimal run for CI: exercises every section once, "
+                             "writes results-ci.json")
     parser.add_argument("--isolated", action="store_true",
                         help="also run the headline table in separate processes")
     parser.add_argument("--worker", nargs=4, metavar=("ARM", "A", "B", "K"),
@@ -445,17 +457,24 @@ def main() -> None:
     results = {"python": sys.version.split()[0], "platform": sys.platform,
                "arm_order": ARM_ORDER}
 
-    section_headline(results)
-    section_length_sweep(results, lengths=(16, 64, 256, 1024) if args.quick
-                         else (16, 32, 64, 128, 256, 512, 1024))
-    section_cutoff_sweep(results)
-    section_short_strings(results)
-    section_chinese(results)
-    section_memory(results, lengths=(64, 1024) if args.quick else (64, 256, 1024, 2048))
-    if args.isolated:
-        section_isolated(results)
+    if args.ci:
+        # Just enough to prove every code path runs and stays correct.
+        section_headline(results)
+        section_short_strings(results)
+        section_chinese(results)
+        out_name = "results-ci.json"
+    else:
+        section_headline(results)
+        section_length_sweep(results, lengths=(16, 64, 256, 1024) if args.quick
+                             else (16, 32, 64, 128, 256, 512, 1024))
+        section_cutoff_sweep(results)
+        section_short_strings(results)
+        section_chinese(results)
+        section_memory(results, lengths=(64, 1024) if args.quick else (64, 256, 1024, 2048))
+        if args.isolated:
+            section_isolated(results)
+        out_name = "results-quick.json" if args.quick else "results.json"
 
-    out_name = "results-quick.json" if args.quick else "results.json"
     out_path = Path(__file__).resolve().parent / out_name
     out_path.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nwrote {out_path.relative_to(ROOT)}")

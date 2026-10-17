@@ -28,15 +28,15 @@ jobs:
         run: python -m unittest discover -s tests -t . -v
 
       - name: Smoke-run the benchmark
-        run: python benchmarks/run_all.py --quick
+        run: python benchmarks/run_all.py --ci
 
       # Guard against a smoke run clobbering the real results table.
-      - name: Verify quick run did not touch results.json
+      - name: Verify smoke run did not touch results.json
         shell: bash
         run: |
           if git diff --quiet -- benchmarks/results.json; then
             echo "results.json untouched, as intended"
           else
-            echo "::error::--quick modified results.json"
+            echo "::error::--ci modified results.json"
             exit 1
           fi

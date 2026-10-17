@@ -9,3 +9,4 @@ venv/
 .idea/
 .vscode/
 results-quick.json
+results-ci.json
